@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Warehouse Rescue Rush | 3D AI Robot Simulation</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- 3D Canvas -->
+  <div id="webgl-container"></div>
+
+  <!-- HOME SCREEN -->
+  <div id="screen-home" class="full-screen-menu">
+    <h1 class="hero-title">WAREHOUSE RESCUE RUSH</h1>
+    <p class="hero-subtitle">3D Futuristic Robot Navigation & AI Graph Search Simulator</p>
+    <div class="home-menu-btns">
+      <button id="btn-home-play" class="primary-btn">▶ PLAY GAME</button>
+      <button id="btn-home-levels" class="secondary-btn">🎯 LEVEL SELECT</button>
+      <button id="btn-home-tutorial" class="secondary-btn">📖 HOW TO PLAY & CONTROLS</button>
+    </div>
+  </div>
+
+  <!-- LEVEL SELECT SCREEN -->
+  <div id="screen-level-select" class="full-screen-menu hidden">
+    <h2 style="font-size: 2rem; color: #38bdf8; margin-bottom: 1.5rem;">Select Mission Level</h2>
+    <div id="level-cards-grid" class="level-grid"></div>
+    <button onclick="document.getElementById('screen-level-select').classList.add('hidden'); document.getElementById('screen-home').classList.remove('hidden');" class="secondary-btn" style="margin-top: 1.5rem;">⬅ BACK TO HOME</button>
+  </div>
+
+  <!-- HUD OVERLAY -->
+  <div id="hud" class="hidden">
+    <div class="hud-top-bar">
+      <!-- Level Info & Mode -->
+      <div class="hud-panel">
+        <div class="hud-title-group">
+          <h2 id="hud-level-id">Level 1</h2>
+          <p id="hud-level-title">Robot Academy</p>
+        </div>
+        <button id="btn-mode-toggle" class="hud-badge mode-manual">🎮 MANUAL MODE</button>
+      </div>
+
+      <!-- Live Metrics: Battery, Score, Timer -->
+      <div class="hud-panel">
+        <!-- Battery Bar -->
+        <div class="battery-container">
+          <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #94a3b8;">
+            <span>BATTERY</span>
+            <span id="hud-battery-text">100%</span>
+          </div>
+          <div class="battery-bar-bg">
+            <div id="hud-battery-fill" class="battery-bar-fill"></div>
+          </div>
+        </div>
+
+        <div class="hud-stat">
+          <span class="hud-stat-label">SCORE</span>
+          <span id="hud-score" class="hud-stat-val">0</span>
+        </div>
+
+        <div class="hud-stat">
+          <span class="hud-stat-label">TIME</span>
+          <span id="hud-timer" class="hud-stat-val">2:00</span>
+        </div>
+
+        <div class="hud-stat">
+          <span class="hud-stat-label">PACKAGES</span>
+          <span id="hud-targets-pkg" class="hud-stat-val">0/1</span>
+        </div>
+
+        <div class="hud-stat">
+          <span class="hud-stat-label">RESCUES</span>
+          <span id="hud-targets-wrk" class="hud-stat-val">0/0</span>
+        </div>
+      </div>
+
+      <!-- Controls & Overlay Buttons -->
+      <div style="display: flex; gap: 0.6rem;">
+        <button id="btn-edu-toggle" class="hud-btn">🧠 AI OVERLAY</button>
+        <button id="btn-pause" class="hud-btn">⏸ PAUSE</button>
+      </div>
+    </div>
+
+    <div class="hud-bottom-bar">
+      <!-- AI Algorithm Selector -->
+      <div class="algo-select-bar">
+        <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">AI Algorithm:</span>
+        <select id="select-algorithm">
+          <option value="A* Search">A* Search (f = g + h)</option>
+          <option value="BFS (Breadth-First Search)">BFS (Breadth-First Search)</option>
+          <option value="DFS (Depth-First Search)">DFS (Depth-First Search)</option>
+          <option value="UCS (Uniform Cost / Dijkstra)">UCS (Uniform Cost / Dijkstra)</option>
+          <option value="Greedy Best-First Search">Greedy Best-First Search</option>
+        </select>
+      </div>
+
+      <!-- 2D Canvas Minimap -->
+      <div class="minimap-wrapper">
+        <canvas id="minimap-canvas" width="160" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRIEFING MODAL -->
+  <div id="modal-briefing" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 id="briefing-title">Level 1: Robot Academy</h2>
+      <h3 id="briefing-subtitle">Basic Manual & Hover Controls</h3>
+      <p id="briefing-story">Story text goes here...</p>
+      
+      <div>
+        <h4 style="color: #06b6d4; margin-bottom: 0.4rem;">Mission Objectives:</h4>
+        <ul id="briefing-objectives" class="modal-list"></ul>
+      </div>
+
+      <p style="font-size: 0.85rem; color: #94a3b8;">
+        Recommended Algorithm: <span id="briefing-algo-recommended" style="color: #facc15; font-weight: 700;">A* Search</span>
+      </p>
+
+      <button id="btn-start-mission" class="primary-btn">▶ START MISSION</button>
+    </div>
+  </div>
+
+  <!-- EDUCATIONAL ALGORITHM OVERLAY MODAL -->
+  <div id="modal-edu" class="modal-overlay hidden">
+    <div class="modal-card edu-modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 id="edu-algo-name">A* Search</h2>
+        <span id="edu-algo-formula" style="background: #1e293b; color: #38bdf8; padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 700;">f(n) = g(n) + h(n)</span>
+      </div>
+
+      <p id="edu-algo-desc">Algorithm description...</p>
+
+      <!-- Live Search Metrics -->
+      <div class="edu-grid">
+        <div class="edu-stat-box"><span>Nodes Expanded:</span><strong id="edu-stat-nodes">0</strong></div>
+        <div class="edu-stat-box"><span>Open List Size:</span><strong id="edu-stat-open">0</strong></div>
+        <div class="edu-stat-box"><span>Path Length:</span><strong id="edu-stat-length">0</strong></div>
+        <div class="edu-stat-box"><span>Path Cost g(n):</span><strong id="edu-stat-cost">0</strong></div>
+        <div class="edu-stat-box"><span>Execution Time:</span><strong id="edu-stat-time">0.00 ms</strong></div>
+      </div>
+
+      <!-- Live Algorithm Comparison -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <h4 style="color: #38bdf8;">Algorithm Comparison (Current Grid):</h4>
+          <button id="btn-run-compare" class="secondary-btn" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">⚡ Run Comparison</button>
+        </div>
+        <table class="edu-table">
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Nodes Expanded</th>
+              <th>Path Cost</th>
+              <th>Time (ms)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="edu-table-body"></tbody>
+        </table>
+      </div>
+
+      <button onclick="document.getElementById('modal-edu').classList.add('hidden')" class="secondary-btn">CLOSE OVERLAY</button>
+    </div>
+  </div>
+
+  <!-- PAUSE MODAL -->
+  <div id="modal-pause" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 400px; text-align: center;">
+      <h2>⏸ GAME PAUSED</h2>
+      <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
+        <button id="btn-resume" class="primary-btn">▶ RESUME</button>
+        <button id="btn-restart" class="secondary-btn">🔄 RESTART LEVEL</button>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; background: #1e293b; padding: 0.6rem; border-radius: 8px;">
+          <input type="checkbox" id="chk-sound" />
+          <label for="chk-sound" style="font-size: 0.9rem; color: #cbd5e1;">Sound Effects Enabled</label>
+        </div>
+        <button onclick="document.getElementById('modal-pause').classList.add('hidden'); window.gameApp.showScreen('home');" class="secondary-btn">🏠 RETURN TO HOME</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS MODAL -->
+  <div id="modal-results" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 450px; text-align: center;">
+      <h2 id="results-title">MISSION ACCOMPLISHED!</h2>
+      <div id="results-stars" style="font-size: 2.2rem; color: #facc15;">⭐⭐⭐</div>
+      <h3 id="results-score">Score: 2500</h3>
+      <div id="results-details"></div>
+
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+        <button onclick="document.getElementById('modal-results').classList.add('hidden'); window.gameApp.loadLevel(window.gameState.currentLevelIndex);" class="secondary-btn">🔄 RETRY</button>
+        <button id="btn-next-level" class="primary-btn">NEXT LEVEL ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
